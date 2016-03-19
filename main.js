@@ -27,8 +27,11 @@
       for (var i = 0; i < this.bodies.length; i ++){
         drawRect(screen, this.bodies[i]);
       }
-    }
-  };
+    },
+    addBody: function(body) {
+        this.bodies.push(body);
+      }
+    };
 
 var Player = function(game, gameSize) {
   this.game = game;
@@ -40,10 +43,47 @@ var Player = function(game, gameSize) {
 Player.prototype = {
   update: function() {
     if (this.keyboarder.isDown(this.keyboarder.KEYS.LEFT)) {
-      this.center.x -= 2;
+      this.center.x -= 4;
     }else if (this.keyboarder.isDown(this.keyboarder.KEYS.RIGHT)) {
-      this.center.x += 2;
+      this.center.x += 4;
     }
+    if (this.keyboarder.isDown(this.keyboarder.KEYS.SPACE)) {
+      var bullet = new Bullet({ x: this.center.x, y: this.center.y - this.size.x/2},
+      {x: 0, y: -6});
+      this.game.addBody(bullet);
+    }
+  }
+}
+
+
+var Invader = function(game, center) {
+  this.game = game;
+  this.size = {x:15, y: 15};
+  this.center = center;
+  this.patrolX = 0;
+  this.speedX = 0.5;
+}
+
+Invader.prototype = {
+  update: function() {
+
+  }
+}
+
+
+var Bullet = function(center, velocity) {
+
+  this.size = { x: 3, y: 3 };
+  this.center = center;
+  this.velocity = velocity;
+}
+
+Bullet.prototype = {
+  update: function() {
+      this.center.x += this.velocity.x;
+      this.center.y += this.velocity.y * 1.5;
+
+
   }
 };
 
