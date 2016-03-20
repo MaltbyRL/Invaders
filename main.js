@@ -1,3 +1,4 @@
+var canShoot = true
 ;(function() {
   var Game = function(canvasId) {
     var canvas = document.getElementById(canvasId);
@@ -18,6 +19,9 @@
     tick();
     })
   };
+
+
+
 
   Game.prototype = {
     update: function() {
@@ -68,12 +72,17 @@ Player.prototype = {
     }else if (this.keyboarder.isDown(this.keyboarder.KEYS.RIGHT)) {
       this.center.x += 4;
     }
-    if (this.keyboarder.isDown(this.keyboarder.KEYS.SPACE)) {
+    if (this.keyboarder.isDown(this.keyboarder.KEYS.SPACE) && canShoot === true) {
       var bullet = new Bullet({ x: this.center.x, y: this.center.y - this.size.x/2},
       {x: 0, y: -8});
+
       this.game.addBody(bullet);
       this.game.shootSound.load();
       this.game.shootSound.play();
+      canShoot = false
+      setTimeout(function(){
+        canShoot = true
+      }, 500)
     }
   }
 }
@@ -133,13 +142,13 @@ Bullet.prototype = {
   }
 };
 
+
 var Keyboarder = function() {
   var keyState = {};
-
+  keyState
   window.onkeydown = function(e) {
     if(e.keyCode === 32 && keyState[32] !== true) {
         keyState[32] = true;
-      console.log(count)
 
     }else if(e.keyCode === 39 || e.keyCode === 37) {
       keyState[e.keyCode] = true
@@ -160,11 +169,15 @@ var Keyboarder = function() {
 };
 
 var colliding = function(b1, b2) {
-  return !(b1 === b2 ||
-          b1.center.x + b1.size.x/2 < b2.center.x - b2.size.x / 2 ||
-          b1.center.y + b1.size.y/2 < b2.center.y - b2.size.y / 2 ||
-          b1.center.x - b1.size.x/2 > b2.center.x + b2.size.x / 2 ||
-          b1.center.y - b1.size.y/2 > b2.center.y + b2.size.y / 2);
+  var didCollide = !(b1 === b2 ||
+                    b1.center.x + b1.size.x/2 < b2.center.x - b2.size.x / 2 ||
+                    b1.center.y + b1.size.y/2 < b2.center.y - b2.size.y / 2 ||
+                    b1.center.x - b1.size.x/2 > b2.center.x + b2.size.x / 2 ||
+                    b1.center.y - b1.size.y/2 > b2.center.y + b2.size.y / 2);
+  if (didCollide === true) {
+    console.log("hit")
+  }
+  return didCollide
 };
 
 var loadSound = function(url, callback) {
