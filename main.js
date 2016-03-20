@@ -7,26 +7,26 @@
     this.bodies = createInvaders(this).concat(new Player(this, gameSize))
 
     var self = this;
-    var tick = function() {
-      self.update();
-      self.draw(screen, gameSize);
-      requestAnimationFrame(tick);
-    };
+    loadSound("pew.mp3", function(shootSound) {
+      self.shootSound = shootSound;
+      var tick = function() {
+        self.update();
+        self.draw(screen, gameSize);
+        requestAnimationFrame(tick);
+      };
 
     tick();
+    })
   };
 
   Game.prototype = {
     update: function() {
-
-
       var bodies = this.bodies;
       var notCollidingWithAnything = function(b1) {
           return bodies.filter(function(b2) {
             return colliding(b1, b2);
           }).length === 0;
       }
-
       this.bodies = this.bodies.filter(notCollidingWithAnything);
 
 
@@ -42,7 +42,16 @@
     },
     addBody: function(body) {
         this.bodies.push(body);
-      }
+      },
+
+    invadersBelow: function(invader) {
+      return this.bodies.filter(function(b) {
+        return b instanceof Invader &&
+               b.center.y > invader.center.y &&
+               b.center.x - invader.center.x < invader.size.x;
+  }).length > 0;
+}
+
     };
 
 var Player = function(game, gameSize) {
@@ -61,8 +70,10 @@ Player.prototype = {
     }
     if (this.keyboarder.isDown(this.keyboarder.KEYS.SPACE)) {
       var bullet = new Bullet({ x: this.center.x, y: this.center.y - this.size.x/2},
-      {x: 0, y: -6});
+      {x: 0, y: -8});
       this.game.addBody(bullet);
+      this.game.shootSound.load();
+      this.game.shootSound.play();
     }
   }
 }
@@ -84,6 +95,14 @@ Invader.prototype = {
 
     this.center.x += this.speedX;
     this.patrolX += this.speedX;
+
+    if(Math.random() > 0.997 && !this.game.invadersBelow(this)) {
+      var bullet = new Bullet({ x: this.center.x, y: this.center.y + this.size.x/2},
+      {x: Math.random() - 0.5, y: 8});
+      this.game.addBody(bullet);
+
+    }
+
   }
 };
 
@@ -100,7 +119,7 @@ var createInvaders = function(game) {
 
 var Bullet = function(center, velocity) {
 
-  this.size = { x: 3, y: 3 };
+  this.size = {x: 2, y: 2};
   this.center = center;
   this.velocity = velocity;
 }
@@ -108,7 +127,7 @@ var Bullet = function(center, velocity) {
 Bullet.prototype = {
   update: function() {
       this.center.x += this.velocity.x;
-      this.center.y += this.velocity.y / 1.5;
+      this.center.y += this.velocity.y;
 
 
   }
@@ -118,11 +137,19 @@ var Keyboarder = function() {
   var keyState = {};
 
   window.onkeydown = function(e) {
-    keyState[e.keyCode] = true
-  };
+    if(e.keyCode === 32 && keyState[32] !== true) {
+        keyState[32] = true;
+      console.log(count)
+
+    }else if(e.keyCode === 39 || e.keyCode === 37) {
+      keyState[e.keyCode] = true
+    }
+  }
   window.onkeyup = function(e) {
     keyState[e.keyCode] = false
   };
+
+
 
   this.isDown = function(keyCode) {
 
@@ -138,7 +165,20 @@ var colliding = function(b1, b2) {
           b1.center.y + b1.size.y/2 < b2.center.y - b2.size.y / 2 ||
           b1.center.x - b1.size.x/2 > b2.center.x + b2.size.x / 2 ||
           b1.center.y - b1.size.y/2 > b2.center.y + b2.size.y / 2);
+};
+
+var loadSound = function(url, callback) {
+  var loaded = function() {
+    callback(sound);
+    sound.removeEventListener("canplaythrough", loaded);
+  };
+
+  var sound = new Audio(url);
+  sound.addEventListener("canplaythrough", loaded);
+  sound.load()
 }
+
+
 var drawRect = function(screen, body) {
   screen.fillRect(body.center.x - body.size.x/2,
                   body.center.y - body.size.y/2,
